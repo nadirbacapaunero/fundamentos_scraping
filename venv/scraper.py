@@ -8,15 +8,37 @@ import datetime
 
 
 home_url = 'https://www.larepublica.co/'
-xpath_link_to_article= '//div[@class="container"]//a/@href'
-xpath_title='//div[@class="mb-auto"]/h2/span/text()'
+xpath_link_to_article='//text-fill[not(@class)]/a/@href'           #'//div[@class="container"]//a/@href' #cambie el div por el text-fill
+xpath_title='//div[@class="mb-auto"]/text-fill/span/text()'  #cambie el h2 por el text-fill
 xpath_summary='//div[@class="lead"]/p//text()'
 xpath_body = '//div[@class ="html-content"]/p[not(@class)]//text()'
 
-def parse_notice(links, today):
+def parse_notice(link, today):
     try:
-        pass
-    except
+      response = requests.get(link)
+      if response.status_code == 200:
+        notice = response.content.decode('utf-8')
+        parsed = html.fromstring(notice)
+
+        try:
+            title = parsed.xpath(xpath_title)[0]
+            title = title.replace('\"', '')
+            summary = parsed.xpath(xpath_summary)[0]
+            body = parsed.xpath(xpath_body)
+        except IndexError:
+            return
+        with open('{}\{}.txt'.format(today,title),'w', encoding='utf-8') as f:
+            f.write(title)
+            f.write('\n\n')
+            f.write(summary)
+            f.write('\n\n')  
+            for p in body:
+                f.write(p)
+                f.write('\n')
+      else:
+        raise ValueError(response.status_code)
+    except ValueError as ve:
+        print(ve)
 
 
 def parse_home():
@@ -37,7 +59,7 @@ def parse_home():
 
 
         else:
-            raise ValueError(f'Error: {response.status_code}')
+            raise ValueError(response.status_code)
 
 
     except ValueError as ve:
